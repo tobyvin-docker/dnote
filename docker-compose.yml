@@ -1,0 +1,58 @@
+version: "3"
+
+services:
+  postgres:
+    image: postgres:11-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dnote
+      POSTGRES_PASSWORD_FILE: dnote
+      POSTGRES_DB: dnote
+    volumes:
+      - nfs:/var/lib/postgresql/data
+
+  dnote:
+    image: dnote/dnote
+    container_name: dnote
+    restart: unless-stopped
+    environment:
+      GO_ENV: PRODUCTION
+      DBSkipSSL: "true"
+      DBHost: postgres
+      DBPort: 5432
+      DBName: dnote
+      DBUser: dnote
+      DBPassword_FILE: dnote
+      WebURL: dnote.${DOMAIN}
+      OnPremise: "true"
+      SmtpHost:
+      SmtpPort:
+      SmtpUsername:
+      SmtpPassword:
+      DisableRegistration: "false"
+    networks:
+      - proxy
+    ports:
+      - 3000:3000
+    depends_on:
+      - postgres
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.dnote.entrypoints=websecure
+      - traefik.http.services.dnote.loadbalancer.server.port=3000
+
+volumes:
+  nfs:
+    driver: local
+    driver_opts:
+      type: "nfs"
+      o: addr=bifrost,nolock,soft,rw
+      device: ":/mnt/share/docker/dnote"
+
+networks:
+  default:
+    external:
+      name: bridge
+  proxy:
+    external: true
