@@ -9,6 +9,8 @@ services:
       POSTGRES_USER: dnote
       POSTGRES_PASSWORD_FILE: dnote
       POSTGRES_DB: dnote
+    networks:
+      - postgres
     volumes:
       - nfs:/var/lib/postgresql/data
 
@@ -32,6 +34,7 @@ services:
       SmtpPassword:
       DisableRegistration: "false"
     networks:
+      - postgres
       - proxy
     ports:
       - 3000:3000
@@ -51,8 +54,6 @@ volumes:
       device: ":/mnt/share/docker/dnote"
 
 networks:
-  default:
-    external:
-      name: bridge
+  postgres:
   proxy:
     external: true
